@@ -180,31 +180,65 @@ public class TileMap : MonoBehaviour {
         return;
     }
 
-    // Move selected unit to coordinates if it exists
-    public void moveSelectedUnit(int x, int y) {
-        if (selectedUnit != null && currentState == STATE_COMMAND) {
-            Assert.AreEqual(currentState, STATE_COMMAND);
+    public void processTilePress(int x, int y) {
+        GameObject newSelectedUnitGO = map[x, y].unit;
+        Tile selectedTile = map[x, y].tile.GetComponent<Tile>();
 
-            Tile selectedTile = (map[x, y].tile).GetComponent<Tile>();
-            if (selectedTile.isValid) {
-                Debug.Log("Moving selected unit " + selectedUnit.name
-                    + " to coordinates (" + x + "," + y + ").");
-                moveUnit(selectedUnit, x, y);
-            } 
+        // CASE 1: State Select
+        // Select the unit on the tile
+        if (currentState == STATE_SELECT) {
+            if (newSelectedUnitGO == null) {
+                Debug.Log("No unit selected!");
+            }
             else {
-                Debug.Log("Coordinates (" + x + "," + y + ") are invalid!");
+                selectUnit(newSelectedUnitGO);
+                setValidTiles(Tile.MAT_GRASS_VALID_MOVEMENT, newSelectedUnitGO.GetComponent<Unit>().speed);
             }
         }
-        else if (currentState == STATE_ATTACK_1) {
-            Debug.Log("Cannot move while in attack state!");
-        }
-        else {
-            Debug.Log("No unit selected!");
-        }
-        return;
-    }
 
-    
+        // CASE 2: State Command
+        // Move the unit to the specified space
+        else if (currentState == STATE_COMMAND) {
+            Assert.IsTrue(selectedUnit != null);
+
+            bool changeToSelect = false;
+
+            // Case i: Selected tile has previously selected unit on it
+            if (newSelectedUnitGO == selectedUnit) { // User clicked the same unit twice
+                changeToSelect = true;
+            }
+            // Case ii: Selected tile has no units on it and is valid
+            else if (selectedTile.isValid && newSelectedUnitGO == null) {
+                Debug.Log("Moving selected unit " + selectedUnit.name +
+                    " to coordinates (" + x + "," + y + ").");
+                moveUnit(selectedUnit, x, y);
+                changeToSelect = true;
+            }
+            // Case iii: Selected tile has no units on it, and is not valid
+            else if (!selectedTile.isValid) {
+                Debug.Log("Coordinates (" + x + "," + y + ") are invalid!");
+            }
+            // Case iv: Selected tile has a non-selected unit on it
+            else if (newSelectedUnitGO != null) { // User clicked any other unit
+                Debug.Log("Can't move to a point occupied by another unit!");
+            }
+
+            if (changeToSelect == true) {
+                resetValidTiles();
+                deselectUnit();
+            }
+        } 
+
+        // CASE 3: State Attack 1
+        // Call units attack function
+        else if (currentState == STATE_ATTACK_1) {
+            // Push the tile selected if selectedUnit is within his pushRange (so check the valid tiles)
+            // CALL UNITS ATTACK FUNCTION FOR THIS! Should just call basic push functions which push the unit it's attack
+            // You can overload the attack function for units that inherit from the basic unit
+            Debug.Log("Attacking tile at (" + x + ", " + y + ")");
+        }
+      
+    }
 
     // Update is called once per frame
     void Update () {

@@ -56,8 +56,5 @@ public class Tile : MonoBehaviour {
 
     void OnMouseUp() {
         tileMap.processTilePress(x, y);
-        tileMap.moveSelectedUnit(x, y);
-        tileMap.deselectUnit();
-        tileMap.resetValidTiles();
     }
 }

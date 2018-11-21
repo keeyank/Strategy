@@ -8,8 +8,13 @@ public class Unit : MonoBehaviour {
 
     public int speed = 5;
     public int pushRange = 1;
-    public int x;
-    public int y;
+    public int x = -1;
+    public int y = -1;
+
+    public void setCoords(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
 
     private void Start() {
         // Gain access to Map's TileMap script

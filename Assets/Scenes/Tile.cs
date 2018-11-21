@@ -38,12 +38,6 @@ public class Tile : MonoBehaviour {
         }
     }
 
-    void OnMouseUp() {
-        tileMap.moveSelectedUnit(x, y);
-        tileMap.deselectUnit();
-        tileMap.resetValidTiles();
-    }
-
     public void setAsValid(int validType) {
         if (type != GRASS) {
             return; // only grass can be a valid tile
@@ -58,5 +52,12 @@ public class Tile : MonoBehaviour {
         }
         isValid = false;
         gameObject.GetComponent<Renderer>().material = mats[MAT_GRASS_INVALID];
+    }
+
+    void OnMouseUp() {
+        tileMap.processTilePress(x, y);
+        tileMap.moveSelectedUnit(x, y);
+        tileMap.deselectUnit();
+        tileMap.resetValidTiles();
     }
 }

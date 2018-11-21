@@ -22,15 +22,17 @@ public class TileMap : MonoBehaviour {
 
     private const int STATE_SELECT = 0;
     private const int STATE_COMMAND = 1;
-    private const int STATE_ATTACK = 2;
+    private const int STATE_ATTACK_1 = 2;
     private int currentState;
+
+    private const int UNIT_DEFAULT = 0;
 
     // To be associated with objects in the inspector
     public GameObject tilePrefab;
     public GameObject[] unitPrefabs;
 
     private GameObject selectedUnit;
-    private GameObject[,] map = new GameObject[MAP_WIDTH, MAP_HEIGHT];
+    private Cell[,] map = new Cell[MAP_WIDTH, MAP_HEIGHT];
 
     public static Vector2Int worldCoordToGameCoord(Vector3 position) {
         float x = position.x;
@@ -55,6 +57,10 @@ public class TileMap : MonoBehaviour {
         setTile(Tile.ROCK, 6, 4);
         setTile(Tile.ROCK, 8, 10);
         setTile(Tile.ROCK, 0, 6);
+
+        // Spawn Units
+        spawnUnit(UNIT_DEFAULT, 0, 0);
+        spawnUnit(UNIT_DEFAULT, 4, 3);
     }
 
 
@@ -73,10 +79,11 @@ public class TileMap : MonoBehaviour {
     private void setTile(int type, int x, int y) {
 
         // Delete previous tile if it exists
+        GameObject unitOnTile = null;
         if (map[x, y] != null) {
-            Destroy(map[x, y]);
-            map[x, y] = null;
-            Assert.AreEqual(map[x, y], null);
+            Destroy(map[x, y].tile);
+            map[x, y].tile = null;
+            unitOnTile = map[x, y].unit;
         }
 
         // Instantiate new tile instance
@@ -86,7 +93,27 @@ public class TileMap : MonoBehaviour {
         // Map is set to tileGO (tile type and coords can be accessed via map at any time)
         Tile tile = tileGO.GetComponent<Tile>();
         tile.setTile(type, x, y, this);
-        map[x, y] = tileGO;
+        map[x, y] = new Cell(tileGO, unitOnTile);
+        return;
+    }
+
+    private void spawnUnit(int type, int x, int y) {
+
+        Tile tile = map[x, y].tile.GetComponent<Tile>();
+        if (tile.type  == Tile.ROCK) {
+            Debug.Log("Invalid Spawn Point: Attempting to spawn on rock.");
+            return;
+        }
+        if (map[x, y].unit != null) {
+            Debug.Log("Invalid Spawn Point: Another unit is on this point.");
+            return;
+        }
+
+        // Instantiate new unit in world coordinates, and set up it's logical position
+        GameObject unitGO = Instantiate(unitPrefabs[0], gameCoordToWorldCoord(x, y, -1), Quaternion.identity);
+        Unit unit = unitGO.GetComponent<Unit>();
+        unit.setCoords(x, y);
+        map[x, y].unit = unitGO;
         return;
     }
 
@@ -110,7 +137,7 @@ public class TileMap : MonoBehaviour {
 
     // Set all tiles within distance, specifying valid material
     public void setValidTiles(int validType, int distance) {
-        Debug.Assert(currentState == STATE_COMMAND || currentState == STATE_ATTACK);
+        Debug.Assert(currentState == STATE_COMMAND || currentState == STATE_ATTACK_1);
         Unit unit = selectedUnit.GetComponent<Unit>();
 
         int minX = Mathf.Clamp(unit.x - distance, 0, MAP_WIDTH - 1);
@@ -121,7 +148,7 @@ public class TileMap : MonoBehaviour {
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 if (Mathf.Abs(unit.x-x) + Mathf.Abs(unit.y-y) <= distance) {
-                    Tile tile = map[x, y].GetComponent<Tile>();
+                    Tile tile = (map[x, y].tile).GetComponent<Tile>();
                     tile.setAsValid(validType);
                 }
             }
@@ -132,7 +159,7 @@ public class TileMap : MonoBehaviour {
     public void resetValidTiles() {
         for (int x = 0; x < MAP_WIDTH; x++) {
             for (int y = 0; y < MAP_HEIGHT; y++) {
-                Tile tile = map[x, y].GetComponent<Tile>();
+                Tile tile = (map[x, y].tile).GetComponent<Tile>();
                 tile.setAsInvalid();
             }
         }
@@ -140,12 +167,16 @@ public class TileMap : MonoBehaviour {
 
     // Move unit to (x, y)
     private void moveUnit(GameObject unitGO, int x, int y) {
+        Unit unit = unitGO.GetComponent<Unit>();
+
         // Move in world
         unitGO.transform.position = gameCoordToWorldCoord(x, y, -1);
-        // Move in game
-        Unit unit = unitGO.GetComponent<Unit>();
+        // Delete unit's previous logical coordinate
+        map[unit.x, unit.y].unit = null;
+        // Move in game logic
         unit.x = x;
         unit.y = y;
+        map[x, y].unit = unitGO;
         return;
     }
 
@@ -154,7 +185,7 @@ public class TileMap : MonoBehaviour {
         if (selectedUnit != null && currentState == STATE_COMMAND) {
             Assert.AreEqual(currentState, STATE_COMMAND);
 
-            Tile selectedTile = map[x, y].GetComponent<Tile>();
+            Tile selectedTile = (map[x, y].tile).GetComponent<Tile>();
             if (selectedTile.isValid) {
                 Debug.Log("Moving selected unit " + selectedUnit.name
                     + " to coordinates (" + x + "," + y + ").");
@@ -164,7 +195,7 @@ public class TileMap : MonoBehaviour {
                 Debug.Log("Coordinates (" + x + "," + y + ") are invalid!");
             }
         }
-        else if (currentState == STATE_ATTACK) {
+        else if (currentState == STATE_ATTACK_1) {
             Debug.Log("Cannot move while in attack state!");
         }
         else {
@@ -172,6 +203,8 @@ public class TileMap : MonoBehaviour {
         }
         return;
     }
+
+    
 
     // Update is called once per frame
     void Update () {
@@ -183,10 +216,26 @@ public class TileMap : MonoBehaviour {
             }
             else {
                 resetValidTiles();
-                currentState = STATE_ATTACK;
+                currentState = STATE_ATTACK_1;
                 int distance = selectedUnit.GetComponent<Unit>().pushRange;
                 setValidTiles(Tile.MAT_GRASS_VALID_ATTACK, distance);
                 Debug.Log("Unit " + selectedUnit.name + "is preparing to attack!");
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha2)) {
+            printLogicalGraph();
+        }
+    }
+
+    // DEBUG FUNCTIONS
+    void printLogicalGraph() {
+        Debug.Log("Printing Logical Map of Units");  
+        for (int i = MAP_HEIGHT-1; i >= 0; i--) {
+            for (int j = 0; j < MAP_WIDTH; j++) {
+                if (map[j, i].unit != null) {
+                    Debug.Log("Coords " + j + ", " + i + "have a unit on them.");
+                }
             }
         }
     }

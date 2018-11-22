@@ -113,6 +113,22 @@ public class TileMap : MonoBehaviour {
         GameObject unitGO = Instantiate(unitPrefabs[0], gameCoordToWorldCoord(x, y, -1), Quaternion.identity);
         Unit unit = unitGO.GetComponent<Unit>();
         unit.setCoords(x, y);
+        unit.tileMap = this;
+        map[x, y].unit = unitGO;
+        return;
+    }
+
+    // Move unit to (x, y)
+    private void moveUnit(GameObject unitGO, int x, int y) {
+        Unit unit = unitGO.GetComponent<Unit>();
+
+        // Move in world
+        unitGO.transform.position = gameCoordToWorldCoord(x, y, -1);
+        // Delete unit's previous logical coordinate
+        map[unit.x, unit.y].unit = null;
+        // Move in game logic
+        unit.x = x;
+        unit.y = y;
         map[x, y].unit = unitGO;
         return;
     }
@@ -165,21 +181,17 @@ public class TileMap : MonoBehaviour {
         }
     }
 
-    // Move unit to (x, y)
-    private void moveUnit(GameObject unitGO, int x, int y) {
-        Unit unit = unitGO.GetComponent<Unit>();
+    public void pushUnit(GameObject unitSource, GameObject unitTarget, int pushDistance) {
+        // Assertion: Either the x of unitSource is the same as the x unitTarget,
+        // or the y of unitSource is the same as the y of unitTarget when pushing (exclusive or)
 
-        // Move in world
-        unitGO.transform.position = gameCoordToWorldCoord(x, y, -1);
-        // Delete unit's previous logical coordinate
-        map[unit.x, unit.y].unit = null;
-        // Move in game logic
-        unit.x = x;
-        unit.y = y;
-        map[x, y].unit = unitGO;
-        return;
+        Vector2Int srcCoord = new Vector2Int(unitSource.GetComponent<Unit>().x, unitSource.GetComponent<Unit>().y);
+        Vector2Int trgCoord = new Vector2Int(unitTarget.GetComponent<Unit>().x, unitTarget.GetComponent<Unit>().y);
+        Debug.Log("Source: " + srcCoord + " Target: " + trgCoord);
+        Assert.IsTrue(srcCoord.x == trgCoord.x ^ srcCoord.y == trgCoord.y); // ^ means exclusive or
     }
 
+    // Ensures the tile press was valid, and calls the appropriate functions
     public void processTilePress(int x, int y) {
         GameObject newSelectedUnitGO = map[x, y].unit;
         Tile selectedTile = map[x, y].tile.GetComponent<Tile>();
@@ -232,10 +244,28 @@ public class TileMap : MonoBehaviour {
         // CASE 3: State Attack 1
         // Call units attack function
         else if (currentState == STATE_ATTACK_1) {
-            // Push the tile selected if selectedUnit is within his pushRange (so check the valid tiles)
-            // CALL UNITS ATTACK FUNCTION FOR THIS! Should just call basic push functions which push the unit it's attack
+            bool changeToSelect = false;
+
             // You can overload the attack function for units that inherit from the basic unit
-            Debug.Log("Attacking tile at (" + x + ", " + y + ")");
+            // Case i: User selected same unit as before
+            if (newSelectedUnitGO == selectedUnit) {
+                changeToSelect = true;
+            }
+            // Case ii: User selected a valid tile with a unit on it
+            else if (selectedTile.isValid && newSelectedUnitGO != null) {
+                Debug.Log("Attacking tile at (" + x + ", " + y + ").");
+                selectedUnit.GetComponent<Unit>().attack1(newSelectedUnitGO);
+                changeToSelect = true;
+            }
+            // Case iii: User did not select a valid tile, or selected a valid tile with no unit on it
+            else {
+                Debug.Log("Coordinates (" + x + "," + y + ") are invalid!");
+            }
+
+            if (changeToSelect == true) {
+                resetValidTiles();
+                deselectUnit();
+            }
         }
       
     }
@@ -245,24 +275,28 @@ public class TileMap : MonoBehaviour {
         
         // Change to attack state when 1 is clicked
         if (Input.GetKeyDown(KeyCode.Alpha1)) {
-            if (selectedUnit == null) {
+            if (currentState == STATE_SELECT) {
+                Assert.IsTrue(selectedUnit == null);
                 Debug.Log("No unit selected!");
             }
             else {
+                // State can be changed to STATE_ATTACK as long as a unit is selected
                 resetValidTiles();
                 currentState = STATE_ATTACK_1;
-                int distance = selectedUnit.GetComponent<Unit>().pushRange;
+                int distance = selectedUnit.GetComponent<Unit>().attackRange;
                 setValidTiles(Tile.MAT_GRASS_VALID_ATTACK, distance);
                 Debug.Log("Unit " + selectedUnit.name + "is preparing to attack!");
             }
         }
 
+        // DEBUG // DELETE THIS LATER
         if (Input.GetKeyDown(KeyCode.Alpha2)) {
             printLogicalGraph();
         }
     }
 
     // DEBUG FUNCTIONS
+    // DELETE IT LATER
     void printLogicalGraph() {
         Debug.Log("Printing Logical Map of Units");  
         for (int i = MAP_HEIGHT-1; i >= 0; i--) {

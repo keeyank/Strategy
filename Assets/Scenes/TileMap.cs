@@ -181,14 +181,75 @@ public class TileMap : MonoBehaviour {
         }
     }
 
-    public void pushUnit(GameObject unitSource, GameObject unitTarget, int pushDistance) {
-        // Assertion: Either the x of unitSource is the same as the x unitTarget,
-        // or the y of unitSource is the same as the y of unitTarget when pushing (exclusive or)
-
+    public void pushUnit(GameObject unitSource, GameObject unitTarget, int pushDst) {
         Vector2Int srcCoord = new Vector2Int(unitSource.GetComponent<Unit>().x, unitSource.GetComponent<Unit>().y);
         Vector2Int trgCoord = new Vector2Int(unitTarget.GetComponent<Unit>().x, unitTarget.GetComponent<Unit>().y);
-        Debug.Log("Source: " + srcCoord + " Target: " + trgCoord);
+        // Assertion: Either the x of unitSource is the same as the x unitTarget,
+        // or the y of unitSource is the same as the y of unitTarget when pushing (exclusive or)
         Assert.IsTrue(srcCoord.x == trgCoord.x ^ srcCoord.y == trgCoord.y); // ^ means exclusive or
+
+        // Push the target unit in opposite direction of the source unit
+        // Note: We can format the if statements this way due to the exclusive or assertions
+        if (srcCoord.x == trgCoord.x) {
+            if (srcCoord.y < trgCoord.y) {
+                // Attempt to find any rocks via a scan, if any exist, then shorten the push distance
+                int maxNewPos_y = Mathf.Clamp(trgCoord.y + pushDst, 0, MAP_HEIGHT - 1);
+                int newPos_y;
+                for (newPos_y = trgCoord.y; newPos_y < maxNewPos_y; newPos_y++) {
+                    Tile newPosTile = map[trgCoord.x, newPos_y + 1].tile.GetComponent<Tile>();
+                    if (newPosTile.type == Tile.ROCK) {
+                        break; // Rock found, newPos is whatever was previously determined
+                        // TODO: Damage unitTarget here
+                    }
+                }
+
+                moveUnit(unitTarget, trgCoord.x, newPos_y);
+            }
+            else { // srcCoord.y > trgCoord.y
+                // Attempt to find any rocks via a scan, if any exist then shorten the pushDst
+                int minNewPos_y = Mathf.Clamp(trgCoord.y - pushDst, 0, MAP_HEIGHT - 1);
+                int newPos_y;
+                for (newPos_y = trgCoord.y; newPos_y > minNewPos_y; newPos_y--) {
+                    Tile newPosTile = map[trgCoord.x, newPos_y - 1].tile.GetComponent<Tile>();
+                    if (newPosTile.type == Tile.ROCK) {
+                        break; // Rock found, newPos is whatever was previously determined
+                        // TODO: Damage unitTarget here
+                    }
+                }
+
+                moveUnit(unitTarget, trgCoord.x, newPos_y);
+            }
+        }
+        else { // srcCoord.y == trgCoord.y
+            if (srcCoord.x < trgCoord.x) {
+                // Attempt to find any rocks, if any exist then shorten the pushDst
+                int maxNewPos_x = Mathf.Clamp(trgCoord.x + pushDst, 0, MAP_WIDTH - 1);
+                int newPos_x;
+                for (newPos_x = trgCoord.x; newPos_x < maxNewPos_x; newPos_x++) {
+                    Tile newPosTile = map[newPos_x + 1, trgCoord.y].tile.GetComponent<Tile>();
+                    if (newPosTile.type == Tile.ROCK) {
+                        break; // Rock found, newPos is whatever was previously determined
+                        // TODO: Damage unitTarget here
+                    }
+                }
+
+                moveUnit(unitTarget, newPos_x, trgCoord.y);
+            }
+            else { // srcCoord.x > trgCoord.y
+                // Attempt to find any rocks, if any exist then shorten the pushDst
+                int minNewPos_x = Mathf.Clamp(trgCoord.x - pushDst, 0, MAP_WIDTH - 1);
+                int newPos_x;
+                for (newPos_x = trgCoord.x; newPos_x > minNewPos_x; newPos_x--) {
+                    Tile newPosTile = map[newPos_x - 1, trgCoord.y].tile.GetComponent<Tile>();
+                    if (newPosTile.type == Tile.ROCK) {
+                        break; // Rock found, newPos is whatever was previously determined
+                        // TODO: Damage unitTarget here
+                    }
+                }
+
+                moveUnit(unitTarget, newPos_x, trgCoord.y);
+            }
+        }
     }
 
     // Ensures the tile press was valid, and calls the appropriate functions

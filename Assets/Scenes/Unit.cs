@@ -20,6 +20,6 @@ public class Unit : MonoBehaviour {
     public void attack1(GameObject unitTarget) {
         Assert.IsTrue(unitTarget != this);
         Debug.Log("Unit " + gameObject.name + "is attacking " + unitTarget.name + ".");
-        tileMap.pushUnit(this.gameObject, unitTarget, 1);
+        tileMap.pushUnit(this.gameObject, unitTarget, 2);
     }
 }

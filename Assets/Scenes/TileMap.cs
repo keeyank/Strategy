@@ -26,6 +26,7 @@ public class TileMap : MonoBehaviour {
     private int currentState;
 
     private const int UNIT_DEFAULT = 0;
+    private const int UNIT_CONSTRUCTER = 1;
 
     // To be associated with objects in the inspector
     public GameObject tilePrefab;
@@ -59,7 +60,7 @@ public class TileMap : MonoBehaviour {
         setTile(Tile.ROCK, 0, 6);
 
         // Spawn Units
-        spawnUnit(UNIT_DEFAULT, 0, 0);
+        spawnUnit(UNIT_CONSTRUCTER, 0, 0);
         spawnUnit(UNIT_DEFAULT, 4, 3);
     }
 
@@ -110,7 +111,7 @@ public class TileMap : MonoBehaviour {
         }
 
         // Instantiate new unit in world coordinates, and set up it's logical position
-        GameObject unitGO = Instantiate(unitPrefabs[0], gameCoordToWorldCoord(x, y, -1), Quaternion.identity);
+        GameObject unitGO = Instantiate(unitPrefabs[type], gameCoordToWorldCoord(x, y, -1), Quaternion.identity);
         Unit unit = unitGO.GetComponent<Unit>();
         unit.setCoords(x, y);
         unit.tileMap = this;
@@ -181,6 +182,8 @@ public class TileMap : MonoBehaviour {
         }
     }
 
+    // PUBLIC ATACK FUNCTIONS //
+    // Push the target unit pushDst cells away from the source unit
     public void pushUnit(GameObject unitSource, GameObject unitTarget, int pushDst) {
         Vector2Int srcCoord = new Vector2Int(unitSource.GetComponent<Unit>().x, unitSource.GetComponent<Unit>().y);
         Vector2Int trgCoord = new Vector2Int(unitTarget.GetComponent<Unit>().x, unitTarget.GetComponent<Unit>().y);

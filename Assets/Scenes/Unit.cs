@@ -17,9 +17,13 @@ public class Unit : MonoBehaviour {
         this.y = y;
     }
 
-    public void attack1(GameObject unitTarget) {
+    public virtual void attack1(GameObject unitTarget) { // virtual means it searches children of Unit class to override 
         Assert.IsTrue(unitTarget != this);
         Debug.Log("Unit " + gameObject.name + "is attacking " + unitTarget.name + ".");
         tileMap.pushUnit(this.gameObject, unitTarget, 2);
     }
+
+    public virtual void attack2(GameObject unitTarget) { }
+    public virtual void attack3(GameObject unitTarget) { }
+
 }

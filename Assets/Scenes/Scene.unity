@@ -220,6 +220,7 @@ MonoBehaviour:
   tilePrefab: {fileID: 1809254875726226, guid: d1294d4488b96a84aa3e240ce76ac610, type: 2}
   unitPrefabs:
   - {fileID: 1377091285613574, guid: c6e5018fbab80f946963ce88947925b0, type: 2}
+  - {fileID: 1377091285613574, guid: 1fd3069cb05939f4a840c5635166dcdd, type: 2}
 --- !u!4 &1038829002
 Transform:
   m_ObjectHideFlags: 0

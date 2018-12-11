@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-public class Unit : MonoBehaviour {
+public abstract class Unit : MonoBehaviour {
 
     public TileMap tileMap;
 
@@ -17,13 +17,13 @@ public class Unit : MonoBehaviour {
         this.y = y;
     }
 
-    public virtual void attack1(GameObject unitTarget) { // virtual means it searches children of Unit class to override 
-        Assert.IsTrue(unitTarget != this);
-        Debug.Log("Unit " + gameObject.name + "is attacking " + unitTarget.name + ".");
+    public void attack1(GameObject unitTarget) { 
+        Assert.IsTrue(unitTarget != this);      
         tileMap.pushUnit(this.gameObject, unitTarget, 2);
     }
 
-    public virtual void attack2(GameObject unitTarget) { }
-    public virtual void attack3(GameObject unitTarget) { }
+    // Abstract functions (need to be overwritten in children scripts)
+    public abstract void attack2(Vector2Int targetPos);
+    //public abstract void attack3(GameObject unitTarget);
 
 }

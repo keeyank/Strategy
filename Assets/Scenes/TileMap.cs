@@ -79,7 +79,8 @@ public class TileMap : MonoBehaviour {
 
     // Instantiate each individual tile at point x, y
     public void setTile(int type, int x, int y) {
-        // If tile has a unit on it, 
+        // If tile has a unit on it, don't allow a rock to be created
+        // TODO: Do that!
             
         // Delete previous tile if it exists
         GameObject unitOnTile = null;
@@ -139,14 +140,14 @@ public class TileMap : MonoBehaviour {
     /* -------------- Public Functions -------------- */
 
     // Set selectedUnit and change state to command state
-    public void selectUnit(GameObject unit) {
+    private void selectUnit(GameObject unit) {
         Debug.Log("Selecting Unit " + unit.name);
         selectedUnit = unit;
         currentState = STATE_COMMAND;
     }
 
     // Remove selectedUnit and change the state
-    public void deselectUnit() {
+    private void deselectUnit() {
         if (selectedUnit != null) {
             Debug.Log("Deselecting Unit " + selectedUnit.name);
             selectedUnit = null;
@@ -154,37 +155,69 @@ public class TileMap : MonoBehaviour {
         }
     }
 
-    // Set all tiles within distance, specifying valid material
-    public void setValidTiles(int validType, int distance) {
-        Debug.Assert(currentState == STATE_COMMAND || currentState == STATE_ATTACK_1);
+    // Set all tiles within range as valid
+    private void setValidTilesMovement(int range) {
+        Debug.Assert(currentState == STATE_COMMAND);
         Unit unit = selectedUnit.GetComponent<Unit>();
 
-        int minX = Mathf.Clamp(unit.x - distance, 0, MAP_WIDTH - 1);
-        int maxX = Mathf.Clamp(unit.x + distance, 0, MAP_WIDTH - 1);
-        int minY = Mathf.Clamp(unit.y - distance, 0, MAP_HEIGHT - 1);
-        int maxY = Mathf.Clamp(unit.y + distance, 0, MAP_HEIGHT - 1);
+        int minX = Mathf.Clamp(unit.x - range, 0, MAP_WIDTH - 1);
+        int maxX = Mathf.Clamp(unit.x + range, 0, MAP_WIDTH - 1);
+        int minY = Mathf.Clamp(unit.y - range, 0, MAP_HEIGHT - 1);
+        int maxY = Mathf.Clamp(unit.y + range, 0, MAP_HEIGHT - 1);
 
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
-                if (Mathf.Abs(unit.x - x) + Mathf.Abs(unit.y - y) <= distance) {
+                if (Mathf.Abs(unit.x - x) + Mathf.Abs(unit.y - y) <= range) {
                     Tile tile = (map[x, y].tile).GetComponent<Tile>();
-                    tile.setAsValid(validType);
+                    tile.setAsValidMovement();
                 }
             }
         }
     }
 
-    // Resets all walkable tiles as valid
-    public void resetValidTiles() {
+    // Set all attackable tiles within selected units range as valid
+    private void setValidTilesAttack(int range, int buffer) {
+        Vector2Int origin = new Vector2Int(selectedUnit.GetComponent<Unit>().x, selectedUnit.GetComponent<Unit>().y);
+
+        int minX = Mathf.Clamp(origin.x - range, 0, MAP_WIDTH - 1);
+        int maxX = Mathf.Clamp(origin.x + range, 0, MAP_WIDTH - 1);
+        int minY = Mathf.Clamp(origin.y - range, 0, MAP_HEIGHT - 1);
+        int maxY = Mathf.Clamp(origin.y + range, 0, MAP_HEIGHT - 1);
+
+        for (int x = minX; x <= maxX; x++) {
+            if (x < origin.x - buffer || x > origin.x + buffer) {
+                Tile tile = (map[x, origin.y].tile).GetComponent<Tile>();
+                tile.setAsValidAttack();
+            }
+        }
+
+        for (int x = minX; x <= maxX; x++) {
+            if (x < origin.x - buffer || x > origin.x + buffer) {
+                Tile tile = (map[x, origin.y].tile).GetComponent<Tile>();
+                tile.setAsValidAttack();
+            }
+        }
+
+        for (int y = minY; y <= maxY; y++) {
+            if (y < origin.y - buffer || y > origin.y + buffer) {
+                Tile tile = (map[origin.x, y].tile).GetComponent<Tile>();
+                tile.setAsValidAttack();
+            }
+        }
+
+    }
+
+    // Resets all invalid tiles as valid
+    private void resetValidTiles() {
         for (int x = 0; x < MAP_WIDTH; x++) {
             for (int y = 0; y < MAP_HEIGHT; y++) {
                 Tile tile = (map[x, y].tile).GetComponent<Tile>();
-                tile.setAsInvalid();
+                tile.setAsInvalid();   
             }
         }
     }
 
-    // PUBLIC ATACK FUNCTIONS //
+    // PUBLIC ATTACK FUNCTIONS //
     // Push the target unit pushDst cells away from the source unit
     public void pushUnit(GameObject unitSource, GameObject unitTarget, int pushDst) {
 
@@ -210,7 +243,7 @@ public class TileMap : MonoBehaviour {
                     Tile newPosTile = map[trgCoord.x, newPos_y + 1].tile.GetComponent<Tile>();
                     if (newPosTile.type == Tile.ROCK) {
                         break; // Rock found, newPos is whatever was previously determined
-                        // TODO: Damage unitTarget here BUT DONT DO IT HERE, MAKE ANNOTHER PUBLIC FUNCTION
+                        // TODO: Damage unitTarget here
                     }
                 }
 
@@ -274,7 +307,7 @@ public class TileMap : MonoBehaviour {
             }
             else {
                 selectUnit(newSelectedUnitGO);
-                setValidTiles(Tile.MAT_GRASS_VALID_MOVEMENT, newSelectedUnitGO.GetComponent<Unit>().speed);
+                setValidTilesMovement(newSelectedUnitGO.GetComponent<Unit>().speed);
             }
         }
 
@@ -290,14 +323,14 @@ public class TileMap : MonoBehaviour {
                 changeToSelect = true;
             }
             // Case ii: Selected tile has no units on it and is valid
-            else if (selectedTile.isValid && newSelectedUnitGO == null) {
+            else if (selectedTile.isValidMovement && newSelectedUnitGO == null) {
                 Debug.Log("Moving selected unit " + selectedUnit.name +
                     " to coordinates (" + x + "," + y + ").");
                 moveUnit(selectedUnit, x, y);
                 changeToSelect = true;
             }
             // Case iii: Selected tile has no units on it, and is not valid
-            else if (!selectedTile.isValid) {
+            else if (!selectedTile.isValidMovement) {
                 Debug.Log("Coordinates (" + x + "," + y + ") are invalid!");
             }
             // Case iv: Selected tile has a non-selected unit on it
@@ -321,7 +354,7 @@ public class TileMap : MonoBehaviour {
                 changeToSelect = true;
             }
             // Case ii: User selected a valid tile with a unit on it
-            else if (selectedTile.isValid) {
+            else if (selectedTile.isValidAttack) {
                 Debug.Log("Attacking tile at (" + x + ", " + y + ").");
 
                 switch (currentState) {
@@ -348,47 +381,32 @@ public class TileMap : MonoBehaviour {
       
     }
 
-    // TODO!!!!! 
-    // todo11!!!
-    // change THE THING OVER THE
-    // OKOKOKOKOKOK GOOOOO CHANGE IT LATER
-
-    // OK
-
-        //OK COOL
-
-        // DO IT
-        // Dont use the setValidTiles function there, instead you should make a new function 
-        // that makes the valid tile in a line from left, right, top, bottom, and stops the line when it comes in contact with a rock
-        // Also, change the use of "valid". Dont use the same valid that works on movement, make a new thingy called "attackValid" which checks validity for attacking
-        // This way you can attack rocks and destroy them if you ever want to implement that in the future.
-        // You will need to change the checking for valid tiles in the tilePressProcessing function in the attack checking part
-    private void changeToAttackState(int attackState) {
-        if (currentState == STATE_SELECT) {
-            Assert.IsTrue(selectedUnit == null);
-            Debug.Log("No unit selected!");
-        }
-        else {
-            // State can be changed to STATE_ATTACK as long as a unit is selected
-            resetValidTiles();
-            currentState = attackState;
-            int distance = selectedUnit.GetComponent<Unit>().attackRange;
-            setValidTiles(Tile.MAT_GRASS_VALID_ATTACK, distance); // TODO: CHANGE THIS!!!
-            Debug.Log("Unit " + selectedUnit.name + "is preparing to attack!");
-        }
+    // Change the state to the attack state, including setting valid attack tiles
+    private void changeToAttackState(int attackState, int validRange, int validBuffer) {
+        // State can be changed to STATE_ATTACK as long as a unit is selected
+        resetValidTiles();
+        currentState = attackState;
+        setValidTilesAttack(validRange, validBuffer); 
+        Debug.Log("Unit " + selectedUnit.name + "is preparing to attack!");
     }
 
     // Update is called once per frame
     void Update () {
         // Check for a request to change to an attack state each frame
         if (Input.GetKeyDown(KeyCode.Alpha1)) {
-            changeToAttackState(STATE_ATTACK_1);
+            if (currentState == STATE_SELECT) { Debug.Log("No unit selected!"); }
+            changeToAttackState(STATE_ATTACK_1, selectedUnit.GetComponent<Unit>().attack1Range, 
+                selectedUnit.GetComponent<Unit>().attack1Buffer);
         }
         if (Input.GetKeyDown(KeyCode.Alpha2)) {
-            changeToAttackState(STATE_ATTACK_2);
+            if (currentState == STATE_SELECT) { Debug.Log("No unit selected!"); }
+            changeToAttackState(STATE_ATTACK_2, selectedUnit.GetComponent<Unit>().attack2Range,
+                selectedUnit.GetComponent<Unit>().attack2Buffer);
         }
         if (Input.GetKeyDown(KeyCode.Alpha3)) {
-            changeToAttackState(STATE_ATTACK_3);
+            if (currentState == STATE_SELECT) { Debug.Log("No unit selected!"); }
+            changeToAttackState(STATE_ATTACK_3, selectedUnit.GetComponent<Unit>().attack3Range,
+                selectedUnit.GetComponent<Unit>().attack3Buffer);
         }
     }
 

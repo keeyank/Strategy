@@ -109,8 +109,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileMap: {fileID: 0}
-  isValidMovement: 0
-  isValidAttack: 0
+  isValid: 0
   type: 0
   x: 0
   y: 0
@@ -119,4 +118,3 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 69eea39fe8c96654ab89a3582d39a86f, type: 2}
   - {fileID: 2100000, guid: 9f5241cbe7d092f4086f40e35b4c879c, type: 2}
   - {fileID: 2100000, guid: 7daa794fa29d0884d873196b0b7e45ef, type: 2}
-  - {fileID: 2100000, guid: 4c44fcf2222304e47bb4e580b22e8503, type: 2}

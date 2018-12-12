@@ -307,7 +307,7 @@ public class TileMap : MonoBehaviour {
             }
             else {
                 selectUnit(newSelectedUnitGO);
-                setValidTilesMovement(newSelectedUnitGO.GetComponent<Unit>().speed);
+                setValidTilesMovement(newSelectedUnitGO.GetComponent<Unit>().Speed);
             }
         }
 
@@ -395,18 +395,24 @@ public class TileMap : MonoBehaviour {
         // Check for a request to change to an attack state each frame
         if (Input.GetKeyDown(KeyCode.Alpha1)) {
             if (currentState == STATE_SELECT) { Debug.Log("No unit selected!"); }
-            changeToAttackState(STATE_ATTACK_1, selectedUnit.GetComponent<Unit>().attack1Range, 
-                selectedUnit.GetComponent<Unit>().attack1Buffer);
+            else {
+                changeToAttackState(STATE_ATTACK_1, selectedUnit.GetComponent<Unit>().Attack1Range,
+                     selectedUnit.GetComponent<Unit>().Attack1Buffer);
+            }
         }
         if (Input.GetKeyDown(KeyCode.Alpha2)) {
             if (currentState == STATE_SELECT) { Debug.Log("No unit selected!"); }
-            changeToAttackState(STATE_ATTACK_2, selectedUnit.GetComponent<Unit>().attack2Range,
-                selectedUnit.GetComponent<Unit>().attack2Buffer);
+            else {
+                changeToAttackState(STATE_ATTACK_2, selectedUnit.GetComponent<Unit>().Attack2Range,
+                    selectedUnit.GetComponent<Unit>().Attack2Buffer);
+            }
         }
         if (Input.GetKeyDown(KeyCode.Alpha3)) {
             if (currentState == STATE_SELECT) { Debug.Log("No unit selected!"); }
-            changeToAttackState(STATE_ATTACK_3, selectedUnit.GetComponent<Unit>().attack3Range,
-                selectedUnit.GetComponent<Unit>().attack3Buffer);
+            else {
+                changeToAttackState(STATE_ATTACK_3, selectedUnit.GetComponent<Unit>().Attack3Range,
+                    selectedUnit.GetComponent<Unit>().Attack3Buffer);
+            }
         }
     }
 

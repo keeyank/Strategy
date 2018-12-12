@@ -4,11 +4,27 @@ using UnityEngine;
 
 public class Constructer : Unit {
 
-    public new int speed = 4;
-    public new int attack2Range = 4;
-    public new int attack2Buffer = 1;
-    public new int attack3Range = 1;
-    public new int attack3Buffer = 0;
+    public override int Speed {
+        get { return 4; }
+    }
+    public override int Attack1Range {
+        get { return 1; }
+    }
+    public override int Attack1Buffer {
+        get { return 0; }
+    }
+    public override int Attack2Range {
+        get { return 5; }
+    }
+    public override int Attack2Buffer {
+        get { return 1; }
+    }
+    public override int Attack3Range {
+        get { return 1; }
+    }
+    public override int Attack3Buffer {
+        get { return 1; }
+    }
 
     public override void attack2(Vector2Int targetPos) {
         tileMap.setTile(Tile.ROCK, targetPos.x, targetPos.y);

@@ -29,7 +29,7 @@ public abstract class Unit : MonoBehaviour {
     }
 
     // Abstract functions (need to be overwritten in children scripts)
-    public abstract void attack2(Vector2Int targetPos);
+    public abstract void attack2(Vector2Int targetPos, GameObject unitTarget);
     //public abstract void attack3(GameObject unitTarget);
 
 }

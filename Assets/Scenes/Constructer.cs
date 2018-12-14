@@ -26,7 +26,8 @@ public class Constructer : Unit {
         get { return 1; }
     }
 
-    public override void attack2(Vector2Int targetPos) {
+    public override void attack2(Vector2Int targetPos, GameObject unitTarget) {
+        tileMap.spawnCluster(targetPos, 1);
         tileMap.setTile(Tile.ROCK, targetPos.x, targetPos.y);
     }
 }

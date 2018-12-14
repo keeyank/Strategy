@@ -80,7 +80,12 @@ public class TileMap : MonoBehaviour {
     // Instantiate each individual tile at point x, y
     public void setTile(int type, int x, int y) {
         // If tile has a unit on it, don't allow a rock to be created
-        // TODO: Do that!
+        if (map[x, y] != null) {
+            if (map[x, y].unit != null && type == Tile.ROCK) {
+                Debug.Log("Can't place a rock tile on a unit!");
+                return;
+            }
+        }
             
         // Delete previous tile if it exists
         GameObject unitOnTile = null;
@@ -294,6 +299,24 @@ public class TileMap : MonoBehaviour {
         return;
     }
 
+    // Spawn a cluster of rocks at pos, variable size
+    public void spawnCluster(Vector2Int pos, int size) {
+
+        int minX = Mathf.Clamp(pos.x - size, 0, MAP_WIDTH - 1);
+        int maxX = Mathf.Clamp(pos.x + size, 0, MAP_WIDTH - 1);
+        int minY = Mathf.Clamp(pos.y - size, 0, MAP_HEIGHT - 1);
+        int maxY = Mathf.Clamp(pos.y + size, 0, MAP_HEIGHT - 1);
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                if ((x-pos.x)*(x-pos.x) + (y-pos.y)*(y-pos.y) <= size*size) {
+                    setTile(Tile.ROCK, x, y);
+                }
+            }
+        }
+    }
+
+
     // Ensures the tile press was valid, and calls the appropriate functions
     public void processTilePress(int x, int y) {
         GameObject newSelectedUnitGO = map[x, y].unit;
@@ -362,7 +385,7 @@ public class TileMap : MonoBehaviour {
                         selectedUnit.GetComponent<Unit>().attack1(newSelectedUnitGO);
                         break;
                     case STATE_ATTACK_2:
-                        selectedUnit.GetComponent<Unit>().attack2(new Vector2Int(x, y));
+                        selectedUnit.GetComponent<Unit>().attack2(new Vector2Int(x, y), newSelectedUnitGO);
                         break;
                 }
                 

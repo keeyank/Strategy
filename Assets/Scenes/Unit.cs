@@ -7,13 +7,47 @@ public abstract class Unit : MonoBehaviour {
 
     public TileMap tileMap;
 
-    abstract public int Speed { get; }
-    abstract public int Attack1Range { get; }
-    abstract public int Attack1Buffer { get; }
-    abstract public int Attack2Range { get; }
-    abstract public int Attack2Buffer { get; }
-    abstract public int Attack3Range { get; }
-    abstract public int Attack3Buffer { get; }
+    protected int maxHP;
+    protected int currentHP;
+    protected int speed;
+    protected int attack1Range;
+    protected int attack1Buffer;
+    protected int attack2Range;
+    protected int attack2Buffer;
+    protected int attack3Range;
+    protected int attack3Buffer;
+
+    public Unit(int maxHP, int currentHP, int speed, int attack1Range, int attack1Buffer, 
+        int attack2Range, int attack2Buffer, int attack3Range, int attack3Buffer) {
+        this.maxHP = maxHP;
+        this.currentHP = currentHP;
+        this.speed = speed;
+        this.attack1Range = attack1Range;
+        this.attack1Buffer = attack1Buffer;
+        this.attack2Range = attack2Range;
+        this.attack2Buffer = attack2Buffer;
+        this.attack3Range = attack3Range;
+        this.attack3Buffer = attack3Buffer;
+    }
+
+    public int MaxHP { get { return maxHP; } }
+    public int CurrentHP {
+        get { return currentHP; }
+        set {
+            // Each time currentHP is updated, check to see if it's below 0 and if it is, destroy the unit
+            currentHP = value;
+            if (currentHP <= 0) {
+                Destroy(gameObject);
+            }
+        }
+    }
+    public int Speed { get { return speed; } }
+    public int Attack1Range { get { return attack1Range; } }
+    public int Attack1Buffer { get { return attack1Buffer; } }
+    public int Attack2Range { get { return attack2Range; } }
+    public int Attack2Buffer { get { return attack2Buffer; } }
+    public int Attack3Range { get { return attack3Range; } }
+    public int Attack3Buffer { get { return attack3Buffer; } }
 
     public int x = -1;
     public int y = -1;

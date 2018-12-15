@@ -4,27 +4,7 @@ using UnityEngine;
 
 public class Constructer : Unit {
 
-    public override int Speed {
-        get { return 4; }
-    }
-    public override int Attack1Range {
-        get { return 1; }
-    }
-    public override int Attack1Buffer {
-        get { return 0; }
-    }
-    public override int Attack2Range {
-        get { return 5; }
-    }
-    public override int Attack2Buffer {
-        get { return 1; }
-    }
-    public override int Attack3Range {
-        get { return 1; }
-    }
-    public override int Attack3Buffer {
-        get { return 1; }
-    }
+    Constructer() : base(7, 7, 4, 1, 0, 5, 1, 1, 0) { }
 
     public override void attack2(Vector2Int targetPos, GameObject unitTarget) {
         tileMap.spawnCluster(targetPos, 1);

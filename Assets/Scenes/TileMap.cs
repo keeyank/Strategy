@@ -247,8 +247,8 @@ public class TileMap : MonoBehaviour {
                 for (newPos_y = trgCoord.y; newPos_y < maxNewPos_y; newPos_y++) {
                     Tile newPosTile = map[trgCoord.x, newPos_y + 1].tile.GetComponent<Tile>();
                     if (newPosTile.type == Tile.ROCK) {
+                        unitTarget.GetComponent<Unit>().CurrentHP -= 1;
                         break; // Rock found, newPos is whatever was previously determined
-                        // TODO: Damage unitTarget here
                     }
                 }
 
@@ -261,6 +261,7 @@ public class TileMap : MonoBehaviour {
                 for (newPos_y = trgCoord.y; newPos_y > minNewPos_y; newPos_y--) {
                     Tile newPosTile = map[trgCoord.x, newPos_y - 1].tile.GetComponent<Tile>();
                     if (newPosTile.type == Tile.ROCK) {
+                        unitTarget.GetComponent<Unit>().CurrentHP -= 1;
                         break; // Rock found, newPos is whatever was previously determined
                     }
                 }
@@ -276,6 +277,7 @@ public class TileMap : MonoBehaviour {
                 for (newPos_x = trgCoord.x; newPos_x < maxNewPos_x; newPos_x++) {
                     Tile newPosTile = map[newPos_x + 1, trgCoord.y].tile.GetComponent<Tile>();
                     if (newPosTile.type == Tile.ROCK) {
+                        unitTarget.GetComponent<Unit>().CurrentHP -= 1;
                         break; // Rock found, newPos is whatever was previously determined
                     }
                 }
@@ -289,6 +291,7 @@ public class TileMap : MonoBehaviour {
                 for (newPos_x = trgCoord.x; newPos_x > minNewPos_x; newPos_x--) {
                     Tile newPosTile = map[newPos_x - 1, trgCoord.y].tile.GetComponent<Tile>();
                     if (newPosTile.type == Tile.ROCK) {
+                        unitTarget.GetComponent<Unit>().CurrentHP -= 1;
                         break; // Rock found, newPos is whatever was previously determined
                     }
                 }

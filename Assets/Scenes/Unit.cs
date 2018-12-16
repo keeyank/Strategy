@@ -17,10 +17,10 @@ public abstract class Unit : MonoBehaviour {
     protected int attack3Range;
     protected int attack3Buffer;
 
-    public Unit(int maxHP, int currentHP, int speed, int attack1Range, int attack1Buffer, 
+    public Unit(int maxHP, int speed, int attack1Range, int attack1Buffer, 
         int attack2Range, int attack2Buffer, int attack3Range, int attack3Buffer) {
         this.maxHP = maxHP;
-        this.currentHP = currentHP;
+        this.currentHP = maxHP;
         this.speed = speed;
         this.attack1Range = attack1Range;
         this.attack1Buffer = attack1Buffer;
@@ -64,6 +64,6 @@ public abstract class Unit : MonoBehaviour {
 
     // Abstract functions (need to be overwritten in children scripts)
     public abstract void attack2(Vector2Int targetPos, GameObject unitTarget);
-    //public abstract void attack3(GameObject unitTarget);
+    public abstract void attack3(Vector2Int targetPos, GameObject unitTarget);
 
 }

@@ -28,6 +28,7 @@ public class TileMap : MonoBehaviour {
     private int currentState;
 
     private const int UNIT_CONSTRUCTER = 0;
+    private const int UNIT_RANGER = 1;
 
     // To be associated with objects in the inspector
     public GameObject tilePrefab;
@@ -62,7 +63,7 @@ public class TileMap : MonoBehaviour {
 
         // Spawn Units
         spawnUnit(UNIT_CONSTRUCTER, 0, 0);
-        spawnUnit(UNIT_CONSTRUCTER, 4, 3);
+        spawnUnit(UNIT_RANGER, 4, 3);
     }
 
 
@@ -223,6 +224,16 @@ public class TileMap : MonoBehaviour {
     }
 
     // PUBLIC ATTACK FUNCTIONS //
+    // Damage a unit by a certain amount of points
+    public void damageUnit(GameObject unitTarget, int damage) {
+        if (unitTarget == null) {
+            Debug.Log("No target selected to damage");
+        }
+        else {
+            unitTarget.GetComponent<Unit>().CurrentHP -= 1;
+        }
+    }
+
     // Push the target unit pushDst cells away from the source unit
     public void pushUnit(GameObject unitSource, GameObject unitTarget, int pushDst) {
 
@@ -247,7 +258,7 @@ public class TileMap : MonoBehaviour {
                 for (newPos_y = trgCoord.y; newPos_y < maxNewPos_y; newPos_y++) {
                     Tile newPosTile = map[trgCoord.x, newPos_y + 1].tile.GetComponent<Tile>();
                     if (newPosTile.type == Tile.ROCK) {
-                        unitTarget.GetComponent<Unit>().CurrentHP -= 1;
+                        damageUnit(unitTarget, 1);
                         break; // Rock found, newPos is whatever was previously determined
                     }
                 }
@@ -261,7 +272,7 @@ public class TileMap : MonoBehaviour {
                 for (newPos_y = trgCoord.y; newPos_y > minNewPos_y; newPos_y--) {
                     Tile newPosTile = map[trgCoord.x, newPos_y - 1].tile.GetComponent<Tile>();
                     if (newPosTile.type == Tile.ROCK) {
-                        unitTarget.GetComponent<Unit>().CurrentHP -= 1;
+                        damageUnit(unitTarget, 1);
                         break; // Rock found, newPos is whatever was previously determined
                     }
                 }
@@ -277,7 +288,7 @@ public class TileMap : MonoBehaviour {
                 for (newPos_x = trgCoord.x; newPos_x < maxNewPos_x; newPos_x++) {
                     Tile newPosTile = map[newPos_x + 1, trgCoord.y].tile.GetComponent<Tile>();
                     if (newPosTile.type == Tile.ROCK) {
-                        unitTarget.GetComponent<Unit>().CurrentHP -= 1;
+                        damageUnit(unitTarget, 1);
                         break; // Rock found, newPos is whatever was previously determined
                     }
                 }
@@ -291,7 +302,7 @@ public class TileMap : MonoBehaviour {
                 for (newPos_x = trgCoord.x; newPos_x > minNewPos_x; newPos_x--) {
                     Tile newPosTile = map[newPos_x - 1, trgCoord.y].tile.GetComponent<Tile>();
                     if (newPosTile.type == Tile.ROCK) {
-                        unitTarget.GetComponent<Unit>().CurrentHP -= 1;
+                        damageUnit(unitTarget, 1);
                         break; // Rock found, newPos is whatever was previously determined
                     }
                 }
@@ -302,8 +313,8 @@ public class TileMap : MonoBehaviour {
         return;
     }
 
-    // Spawn a cluster of rocks at pos, variable size
-    public void spawnCluster(Vector2Int pos, int size) {
+    // Spawn a cluster of tiles at pos, variable size
+    public void spawnCluster(Vector2Int pos, int size, int tileType) {
 
         int minX = Mathf.Clamp(pos.x - size, 0, MAP_WIDTH - 1);
         int maxX = Mathf.Clamp(pos.x + size, 0, MAP_WIDTH - 1);
@@ -313,12 +324,11 @@ public class TileMap : MonoBehaviour {
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 if ((x-pos.x)*(x-pos.x) + (y-pos.y)*(y-pos.y) <= size*size) {
-                    setTile(Tile.ROCK, x, y);
+                    setTile(tileType, x, y);
                 }
             }
         }
     }
-
 
     // Ensures the tile press was valid, and calls the appropriate functions
     public void processTilePress(int x, int y) {
@@ -389,6 +399,9 @@ public class TileMap : MonoBehaviour {
                         break;
                     case STATE_ATTACK_2:
                         selectedUnit.GetComponent<Unit>().attack2(new Vector2Int(x, y), newSelectedUnitGO);
+                        break;
+                    case STATE_ATTACK_3:
+                        selectedUnit.GetComponent<Unit>().attack3(new Vector2Int(x, y), newSelectedUnitGO);
                         break;
                 }
                 

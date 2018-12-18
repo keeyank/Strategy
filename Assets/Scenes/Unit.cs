@@ -7,6 +7,9 @@ public abstract class Unit : MonoBehaviour {
 
     public TileMap tileMap;
 
+    public bool hasAttacked = false;
+    public bool hasMoved = false;
+
     protected int maxHP;
     protected int currentHP;
     protected int speed;
@@ -33,12 +36,18 @@ public abstract class Unit : MonoBehaviour {
     public int MaxHP { get { return maxHP; } }
     public int CurrentHP {
         get { return currentHP; }
-        set {
-            // Each time currentHP is updated, check to see if it's below 0 and if it is, destroy the unit
+        set { 
             currentHP = value;
+            // Destroy unit if below 0 HP
             if (currentHP <= 0) {
                 Destroy(gameObject);
             }
+            // Ensure HP is capped at maxHP if unit was healed
+            if (currentHP > maxHP) {
+                currentHP = maxHP;
+            }
+
+            Debug.Log(gameObject.name + "now has " + currentHP + "HP.");    
         }
     }
     public int Speed { get { return speed; } }

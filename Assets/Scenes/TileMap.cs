@@ -4,6 +4,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 
+
+// TODO:
+// UI that reveals whether a unit is currently selected or not
+// UI that reveals whose turn it is
+// UI for how much health each unit has
+
 public class TileMap : MonoBehaviour {
 
     public class Cell {
@@ -26,6 +32,10 @@ public class TileMap : MonoBehaviour {
     private const int STATE_ATTACK_2 = 3;
     private const int STATE_ATTACK_3 = 4;
     private int currentState;
+
+    private const string TAG_PLAYER1 = "Player1";
+    private const string TAG_PLAYER2 = "Player2";
+    private string currentTurn = TAG_PLAYER1;
 
     private const int UNIT_CONSTRUCTER = 0;
     private const int UNIT_RANGER = 1;
@@ -62,8 +72,10 @@ public class TileMap : MonoBehaviour {
         setTile(Tile.ROCK, 0, 6);
 
         // Spawn Units
-        spawnUnit(UNIT_CONSTRUCTER, 0, 0);
-        spawnUnit(UNIT_RANGER, 4, 3);
+        spawnUnit(UNIT_RANGER, 0, 0, TAG_PLAYER1);
+        spawnUnit(UNIT_CONSTRUCTER, 4, 3, TAG_PLAYER1);
+        spawnUnit(UNIT_RANGER, MAP_WIDTH - 1, MAP_HEIGHT - 1, TAG_PLAYER2);
+        spawnUnit(UNIT_CONSTRUCTER, MAP_WIDTH - 5, MAP_HEIGHT - 3, TAG_PLAYER2);
     }
 
 
@@ -107,7 +119,7 @@ public class TileMap : MonoBehaviour {
         return;
     }
 
-    private void spawnUnit(int type, int x, int y) {
+    private void spawnUnit(int type, int x, int y, string tag) {
 
         Tile tile = map[x, y].tile.GetComponent<Tile>();
         if (tile.type == Tile.ROCK) {
@@ -121,6 +133,7 @@ public class TileMap : MonoBehaviour {
 
         // Instantiate new unit in world coordinates, and set up it's logical position
         GameObject unitGO = Instantiate(unitPrefabs[type], gameCoordToWorldCoord(x, y, -1), Quaternion.identity);
+        unitGO.tag = tag;
         Unit unit = unitGO.GetComponent<Unit>();
         unit.setCoords(x, y);
         unit.tileMap = this;
@@ -130,8 +143,18 @@ public class TileMap : MonoBehaviour {
 
     // Move unit to (x, y)
     private void moveUnit(GameObject unitGO, int x, int y) {
-        Unit unit = unitGO.GetComponent<Unit>();
 
+        Tile tile = map[x, y].tile.GetComponent<Tile>();
+        if (tile.type == Tile.ROCK) {
+            Debug.Log("Invalid Point: Attempting to move on rock.");
+            return;
+        }
+        if (map[x, y].unit != null) {
+            Debug.Log("Invalid Point: Another unit is on this point.");
+            return;
+        }
+
+        Unit unit = unitGO.GetComponent<Unit>();
         // Move in world
         unitGO.transform.position = gameCoordToWorldCoord(x, y, -1);
         // Delete unit's previous logical coordinate
@@ -161,10 +184,16 @@ public class TileMap : MonoBehaviour {
         }
     }
 
-    // Set all tiles within range as valid
+    // Set all tiles within range as valid, except tiles with units on them and rocks
+    // Furthermore, if the selected unit has previously moved this turn, no tiles are valid
     private void setValidTilesMovement(int range) {
         Debug.Assert(currentState == STATE_COMMAND);
         Unit unit = selectedUnit.GetComponent<Unit>();
+
+        if (unit.hasMoved == true) {
+            Debug.Log("Unit has already moved this turn");
+            return;
+        }
 
         int minX = Mathf.Clamp(unit.x - range, 0, MAP_WIDTH - 1);
         int maxX = Mathf.Clamp(unit.x + range, 0, MAP_WIDTH - 1);
@@ -174,28 +203,28 @@ public class TileMap : MonoBehaviour {
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 if (Mathf.Abs(unit.x - x) + Mathf.Abs(unit.y - y) <= range) {
-                    Tile tile = (map[x, y].tile).GetComponent<Tile>();
-                    tile.setAsValidMovement();
+                    if (map[x, y].unit == null) {
+                        map[x, y].tile.GetComponent<Tile>().setAsValidMovement();
+                    }
                 }
             }
         }
     }
 
     // Set all attackable tiles within selected units range as valid
+    // If selectedUnit has already attacked, no tiles are valid
     private void setValidTilesAttack(int range, int buffer) {
+        if (selectedUnit.GetComponent<Unit>().hasAttacked == true) {
+            Debug.Log("Selected unit has already attacked!");
+            return;
+        }
+
         Vector2Int origin = new Vector2Int(selectedUnit.GetComponent<Unit>().x, selectedUnit.GetComponent<Unit>().y);
 
         int minX = Mathf.Clamp(origin.x - range, 0, MAP_WIDTH - 1);
         int maxX = Mathf.Clamp(origin.x + range, 0, MAP_WIDTH - 1);
         int minY = Mathf.Clamp(origin.y - range, 0, MAP_HEIGHT - 1);
         int maxY = Mathf.Clamp(origin.y + range, 0, MAP_HEIGHT - 1);
-
-        for (int x = minX; x <= maxX; x++) {
-            if (x < origin.x - buffer || x > origin.x + buffer) {
-                Tile tile = (map[x, origin.y].tile).GetComponent<Tile>();
-                tile.setAsValidAttack();
-            }
-        }
 
         for (int x = minX; x <= maxX; x++) {
             if (x < origin.x - buffer || x > origin.x + buffer) {
@@ -223,6 +252,17 @@ public class TileMap : MonoBehaviour {
         }
     }
 
+    // Reset all units so their "hasMoved" and "hasAttacked" booleans are set to false
+    private void resetUnitMoves() {
+        // Find all GameObjects with the tag "player1"
+        foreach (GameObject go in GameObject.FindGameObjectsWithTag(currentTurn)) {
+            Assert.IsTrue(go.GetComponent<Unit>() != null); // each go is a unit 
+
+            go.GetComponent<Unit>().hasMoved = false;
+            go.GetComponent<Unit>().hasAttacked = false;
+        }
+    }
+
     // PUBLIC ATTACK FUNCTIONS //
     // Damage a unit by a certain amount of points
     public void damageUnit(GameObject unitTarget, int damage) {
@@ -230,7 +270,7 @@ public class TileMap : MonoBehaviour {
             Debug.Log("No target selected to damage");
         }
         else {
-            unitTarget.GetComponent<Unit>().CurrentHP -= 1;
+            unitTarget.GetComponent<Unit>().CurrentHP -= damage;
         }
     }
 
@@ -252,7 +292,8 @@ public class TileMap : MonoBehaviour {
         // Note: We can format the if statements this way due to the exclusive or assertions
         if (srcCoord.x == trgCoord.x) {
             if (srcCoord.y < trgCoord.y) {
-                // Attempt to find any rocks via a scan, if any exist, then shorten the push distance
+                // Attempt to find any rocks or units via a scan, if any exist, then shorten the push distance
+                // Furthermore, damage the unitTarget and any units encountered in scan
                 int maxNewPos_y = Mathf.Clamp(trgCoord.y + pushDst, 0, MAP_HEIGHT - 1);
                 int newPos_y;
                 for (newPos_y = trgCoord.y; newPos_y < maxNewPos_y; newPos_y++) {
@@ -260,6 +301,11 @@ public class TileMap : MonoBehaviour {
                     if (newPosTile.type == Tile.ROCK) {
                         damageUnit(unitTarget, 1);
                         break; // Rock found, newPos is whatever was previously determined
+                    }
+                    if (map[newPosTile.x, newPosTile.y].unit != null) {
+                        damageUnit(unitTarget, 1);
+                        damageUnit(map[newPosTile.x, newPosTile.y].unit, 1);
+                        break;
                     }
                 }
 
@@ -274,6 +320,11 @@ public class TileMap : MonoBehaviour {
                     if (newPosTile.type == Tile.ROCK) {
                         damageUnit(unitTarget, 1);
                         break; // Rock found, newPos is whatever was previously determined
+                    }
+                    if (map[newPosTile.x, newPosTile.y].unit != null) {
+                        damageUnit(unitTarget, 1);
+                        damageUnit(map[newPosTile.x, newPosTile.y].unit, 1);
+                        break;
                     }
                 }
 
@@ -291,6 +342,11 @@ public class TileMap : MonoBehaviour {
                         damageUnit(unitTarget, 1);
                         break; // Rock found, newPos is whatever was previously determined
                     }
+                    if (map[newPosTile.x, newPosTile.y].unit != null) {
+                        damageUnit(unitTarget, 1);
+                        damageUnit(map[newPosTile.x, newPosTile.y].unit, 1);
+                        break;
+                    }
                 }
 
                 moveUnit(unitTarget, newPos_x, trgCoord.y);
@@ -304,6 +360,11 @@ public class TileMap : MonoBehaviour {
                     if (newPosTile.type == Tile.ROCK) {
                         damageUnit(unitTarget, 1);
                         break; // Rock found, newPos is whatever was previously determined
+                    }
+                    if (map[newPosTile.x, newPosTile.y].unit != null) {
+                        damageUnit(unitTarget, 1);
+                        damageUnit(map[newPosTile.x, newPosTile.y].unit, 1);
+                        break;
                     }
                 }
 
@@ -342,8 +403,12 @@ public class TileMap : MonoBehaviour {
                 Debug.Log("No unit selected!");
             }
             else {
-                selectUnit(newSelectedUnitGO);
-                setValidTilesMovement(newSelectedUnitGO.GetComponent<Unit>().Speed);
+                // Select unit if it's the player's turn
+                if (newSelectedUnitGO.tag == currentTurn) {
+                    selectUnit(newSelectedUnitGO);
+                    setValidTilesMovement(newSelectedUnitGO.GetComponent<Unit>().Speed);
+                }
+                else { Debug.Log("Cannot select an enemy unit to command!"); }
             }
         }
 
@@ -358,20 +423,15 @@ public class TileMap : MonoBehaviour {
             if (newSelectedUnitGO == selectedUnit) { // User clicked the same unit twice
                 changeToSelect = true;
             }
-            // Case ii: Selected tile has no units on it and is valid
-            else if (selectedTile.isValidMovement && newSelectedUnitGO == null) {
-                Debug.Log("Moving selected unit " + selectedUnit.name +
-                    " to coordinates (" + x + "," + y + ").");
+            // Case ii: Selected tile is valid
+            else if (selectedTile.isValidMovement) {
                 moveUnit(selectedUnit, x, y);
+                selectedUnit.GetComponent<Unit>().hasMoved = true;
                 changeToSelect = true;
             }
-            // Case iii: Selected tile has no units on it, and is not valid
+            // Case iii: Selected tile is not valid
             else if (!selectedTile.isValidMovement) {
                 Debug.Log("Coordinates (" + x + "," + y + ") are invalid!");
-            }
-            // Case iv: Selected tile has a non-selected unit on it
-            else if (newSelectedUnitGO != null) { // User clicked any other unit
-                Debug.Log("Can't move to a point occupied by another unit!");
             }
 
             if (changeToSelect == true) {
@@ -389,7 +449,7 @@ public class TileMap : MonoBehaviour {
             if (newSelectedUnitGO == selectedUnit) {
                 changeToSelect = true;
             }
-            // Case ii: User selected a valid tile with a unit on it
+            // Case ii: User selected a valid tile 
             else if (selectedTile.isValidAttack) {
                 Debug.Log("Attacking tile at (" + x + ", " + y + ").");
 
@@ -404,7 +464,7 @@ public class TileMap : MonoBehaviour {
                         selectedUnit.GetComponent<Unit>().attack3(new Vector2Int(x, y), newSelectedUnitGO);
                         break;
                 }
-                
+                selectedUnit.GetComponent<Unit>().hasAttacked = true;
                 changeToSelect = true;
             }
             // Case iii: User did not select a valid tile
@@ -426,7 +486,6 @@ public class TileMap : MonoBehaviour {
         resetValidTiles();
         currentState = attackState;
         setValidTilesAttack(validRange, validBuffer); 
-        Debug.Log("Unit " + selectedUnit.name + "is preparing to attack!");
     }
 
     // Update is called once per frame
@@ -451,6 +510,25 @@ public class TileMap : MonoBehaviour {
             else {
                 changeToAttackState(STATE_ATTACK_3, selectedUnit.GetComponent<Unit>().Attack3Range,
                     selectedUnit.GetComponent<Unit>().Attack3Buffer);
+            }
+        }
+
+        // Check for a request to end the turn of the player whose turn it is
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            Debug.Log("Ending turn for " + currentTurn + ".");
+
+            // End any action the player was previously attempting, and change the state back to select state
+            resetValidTiles();
+            deselectUnit();
+
+            resetUnitMoves();
+
+            // Change turn to the other player
+            if (currentTurn == TAG_PLAYER1) {
+                currentTurn = TAG_PLAYER2;
+            }
+            else { // currentTurn == TAG_PLAYER2
+                currentTurn = TAG_PLAYER1;
             }
         }
     }

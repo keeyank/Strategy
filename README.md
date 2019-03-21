@@ -1,15 +1,14 @@
-# Strategy
-A game I'm making to learn Unity!
+# Strategy Game
 
-This is a really simple tile based strategy game, similar to games like Fire Emblem. It was mostly inspired by a game called Into
-The Breach, which I thought would be really fun to try to recreate with different abilities for the playable units, so that's what
-I set out to do! Along with that, the project is mostly to really familiarize myself with game development via Unity, since it's the
-first solo project on Unity that I've done. 
+This project is to help familiarize myself with game developemnt in the Unity environment. Taking inspiration from games such as Fire Emblem and Into the Breach, I set out to create a simple tile based strategy game. My primary objective was to create a game filled with different characters with their own unique abilities. 
 
-***Features I plan on adding:***
-  - Units - Atleast 5 playable units, 3 can be selected in a game
-  - Tiles - More tile variety, e.g., mud tiles which lower a unit's speed, lava tile which kills a unit when it's pushed into it 
-  - Turns - Players can make a certain amount of "moves" each turn with their units, then the turn switches to the other player - ***Completed!***
-  - Unit Selection Screen - Select the types of Units you want to use
-  - Better Graphics - Updated graphics that aren't just squares
-  - More tiles
+
+## Features In-progress:
+- Units - Atleast 5 playable units, 3 can be selected in a game
+- Tile diversity, e.g., mud lowers a unit's speed, lava kills a unit 
+- Turns - Players can make a certain amount of "moves" each turn with their units, then the turn switches to the other 
+- Unit Selection Screen 
+- Update Graphics 
+
+## Features Completed:
+- Player

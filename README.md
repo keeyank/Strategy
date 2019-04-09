@@ -4,9 +4,12 @@ This is a really simple tile based strategy game, similar to games like Fire Emb
 
 Features I plan on adding:
 
-Units - Atleast 5 playable units, 3 can be selected in a game
-Tiles - More tile variety, e.g., mud tiles which lower a unit's speed, lava tile which kills a unit when it's pushed into it
-Turns - Players can make a certain amount of "moves" each turn with their units, then the turn switches to the other player - Completed!
-Unit Selection Screen - Select the types of Units you want to use
-Better Graphics - Updated graphics that aren't just squares
-More tiles
+- Units - Atleast 5 playable units, 3 can be selected in a game
+
+- Tiles - More tile variety, e.g., mud tiles which lower a unit's speed, lava tile which kills a unit when it's pushed into it
+
+- Turns - Players can make a certain amount of "moves" each turn with their units, then the turn switches to the other player ***Completed!***
+
+- Unit Selection Screen - Select the types of Units you want to use
+
+- Better Graphics - Updated graphics that aren't just squares
